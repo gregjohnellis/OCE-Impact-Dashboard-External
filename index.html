@@ -637,7 +637,7 @@ function initMoments(){
   momentPool=shuffle([...(DATA.moments||[])]); momentIdx=0;
   clearInterval(momentTimer);
   if(!momentPool.length){
-    $("momentText").innerHTML='The 2026–27 season is just getting started. Favorite, silly, and awe-inspiring moments from the gardens will bloom here as teachers share them, week by week.';
+    $("momentText").innerHTML='The 2026–27 season is just getting started. Favorite, silly, and awe-inspiring moments from the gardens will bloom here as educators share them, week by week.';
     $("momentSchool").textContent='One Cool Earth gardens';
     $("momentSub").textContent='new season';
     btn.style.display='none';
@@ -657,7 +657,7 @@ function resetTimer(){
 function setStatus(mode){
   const el=$("status"), t=$("statusText");
   el.classList.remove("live","snap");
-  if(mode==="live"){ el.classList.add("live"); t.textContent="Updated live from the season log"; }
+  if(mode==="live"){ el.classList.add("live"); t.textContent="Updated live from the season log.  Developed by One Cool Earth using Claude.AI"; }
   else { el.classList.add("snap"); t.textContent="Showing the latest saved snapshot"; }
 }
 
