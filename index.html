@@ -393,6 +393,27 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
   .sharemenu{right:auto;left:0;width:100%}
 }
 
+/* the season summary card — built off-screen only when a picture of the
+   whole season is asked for, since the panel itself is far too tall to post */
+.seasoncard{position:fixed;left:-10000px;top:0;width:820px;box-sizing:border-box;
+  padding:38px 40px 30px;background:var(--card);border:1px solid var(--line);border-radius:20px;
+  font-family:"Work Sans",sans-serif}
+.sc-head{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+.sc-eyebrow{font-family:"DM Mono",monospace;font-size:11.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--leaf-deep);margin-bottom:9px}
+.sc-head h3{font-family:"Fraunces",serif;font-weight:600;font-size:32px;color:var(--ink);margin:0;line-height:1.15}
+.sc-head p{margin:8px 0 0;color:var(--muted);font-size:15px}
+.sc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.sc-cell{background:#eef3fb;border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+.sc-cell b{display:block;font-family:"Fraunces",serif;font-weight:600;font-size:25px;
+  color:var(--leaf-deep);line-height:1.1;font-variant-numeric:tabular-nums}
+.sc-cell span{display:block;margin-top:6px;font-size:13px;color:var(--ink);line-height:1.35}
+.sc-cell em{display:block;margin-top:4px;font-style:normal;font-family:"DM Mono",monospace;
+  font-size:10.5px;letter-spacing:.05em;color:var(--muted)}
+.sc-foot{margin-top:22px;padding-top:15px;border-top:1px dashed var(--line);
+  font-family:"DM Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--soil)}
+
 /* ---------- footer credit ---------- */
 .credit{margin-top:16px;text-align:center;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--muted)}
 </style>
@@ -447,6 +468,13 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
         <p>Every lesson, taste, pound, and gathering across all One Cool Earth school gardens
            this year. Each goal is drawn its own way, with a note on why it matters and how
            we get there.</p>
+      </div>
+      <div class="explorer-actions">
+        <div class="sharewrap">
+          <button class="pdfbtn" id="shareBtnSeason" type="button"
+                  aria-haspopup="true" aria-expanded="false">↗ Share this season</button>
+          <div class="sharemenu" id="shareMenuSeason" hidden aria-label="Share the season"></div>
+        </div>
       </div>
     </div>
     <div class="rule"></div>
@@ -1204,45 +1232,26 @@ function fillFieldPhotos(){
 }
 
 /* ---------- export the current school card as a PDF ---------- */
-async function exportSchoolPDF(){
-  const el=$("profile"); if(!el) return;
-  if(typeof html2canvas==="undefined" || !window.jspdf){
-    toast("The PDF tools are still loading — try again in a moment"); return;
-  }
-  const btn=$("shareBtn"); const label=btn?btn.textContent:"";
-  if(btn){ btn.disabled=true; btn.textContent="Preparing PDF…"; }
-  toast("Building the PDF…");
-  try{
-    const canvas=await profileCanvas();
-    const img=canvas.toDataURL("image/png");
-    const { jsPDF }=window.jspdf;
-    const pdf=new jsPDF({orientation:canvas.width>=canvas.height?"l":"p",unit:"pt",format:"a4"});
-    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-    const m=28, maxW=pw-m*2, maxH=ph-m*2;
-    let w=maxW, h=w*canvas.height/canvas.width;
-    if(h>maxH){ h=maxH; w=h*canvas.width/canvas.height; }
-    const name=($("profName")&&$("profName").textContent)||"school";
-    pdf.addImage(img,"PNG",(pw-w)/2,m,w,h);
-    pdf.save(name.replace(/[^\w-]+/g,"_").replace(/^_+|_+$/g,"")+"_garden_impact.pdf");
-    toast("PDF saved");
-  }catch(e){ toast("Couldn't generate the PDF: "+e.message); }
-  finally{ if(btn){ btn.disabled=false; btn.textContent=label; } }
-}
 
-/* ================= sharing a single school =================
-   Three routes, tried in order:
-     1. the phone's own share sheet, carrying a PNG of the card when the
-        device allows files (this is the one that reaches Instagram etc.)
-     2. the same sheet with just text + link
-     3. a menu of web intents, copy-to-clipboard, and save-as-image
-   The link always carries ?school=<name>, so it opens straight onto that
-   garden rather than the front of the dashboard.
-   ========================================================== */
+/* ================= sharing =================
+   Two things can be shared: one school's card, or the season as a whole.
+   Both run through the same menu. The only difference is the context
+   object below, which knows the wording, the link, the file names, and
+   which element to photograph.
+
+   Instagram sits with the other networks. It cannot be a true one-click
+   post — Instagram publishes nothing from a web page, no intent URL and
+   no public API — so it is a plain link to instagram.com that also drops
+   the card image in Downloads and the caption on the clipboard first.
+   =========================================== */
 const SHARE_NETS=[
-  {id:"x",        label:"Post on X",
+  {id:"instagram", label:"Post on Instagram", prep:true,
+   href:()=>"https://www.instagram.com/",
+   ico:`<rect x="2.8" y="2.8" width="14.4" height="14.4" rx="4.2" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="14.3" cy="5.8" r="1.05" fill="currentColor"/>`},
+  {id:"x", label:"Post on X",
    href:(t,u)=>`https://twitter.com/intent/tweet?text=${encodeURIComponent(t)}&url=${encodeURIComponent(u)}`,
    ico:`<path d="M2.6 2h4.1l4 5.4L15.2 2h2.2l-5.6 6.4L18 18h-4.1l-4.3-5.8L4.4 18H2.2l6-6.8L2.6 2z" fill="currentColor"/>`},
-  {id:"bluesky",  label:"Post on Bluesky",
+  {id:"bluesky", label:"Post on Bluesky",
    href:(t,u)=>`https://bsky.app/intent/compose?text=${encodeURIComponent(t+" "+u)}`,
    ico:`<path d="M10 8.1C8.9 6 6.1 2.6 4 2.6c-1.4 0-1.9 1.2-1.9 2.6 0 1.5.5 5.1.8 5.8.5 1.2 1.7 1.6 2.9 1.5-2 .3-2.6 1.5-1.6 2.9.9 1.3 2.6 2.3 3.6 1 .8-1 1.6-2.6 2.2-4 .6 1.4 1.4 3 2.2 4 1 1.3 2.7.3 3.6-1 1-1.4.4-2.6-1.6-2.9 1.2.1 2.4-.3 2.9-1.5.3-.7.8-4.3.8-5.8 0-1.4-.5-2.6-1.9-2.6-2.1 0-4.9 3.4-6 5.5z" fill="currentColor"/>`},
   {id:"facebook", label:"Share on Facebook",
@@ -1253,19 +1262,18 @@ const SHARE_NETS=[
    ico:`<path d="M4.4 6.6h2.5V18H4.4V6.6zM5.6 2.4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM8.9 6.6h2.4v1.6h.1c.4-.7 1.4-1.6 2.9-1.6 3 0 3.6 1.9 3.6 4.4V18h-2.5v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V18H8.9V6.6z" fill="currentColor"/>`}
 ];
 const ICO_COPY=`<path d="M7 7V4.6c0-.9.7-1.6 1.6-1.6h6.8c.9 0 1.6.7 1.6 1.6v6.8c0 .9-.7 1.6-1.6 1.6H13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="3" y="7" width="10" height="10" rx="1.6" stroke="currentColor" stroke-width="1.6" fill="none"/>`;
-const ICO_INSTA=`<rect x="2.8" y="2.8" width="14.4" height="14.4" rx="4.2" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="14.3" cy="5.8" r="1.05" fill="currentColor"/>`;
-const ICO_PDF=`<path d="M4.6 2.6h6.2l4.6 4.6v10.2H4.6z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M10.6 2.8v4.6h4.6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M6.9 13.6h6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`;
-const ICO_SHEET=`<path d="M10 2.8v9.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6.6 6.2 10 2.8l3.4 3.4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 10.6v5a1.6 1.6 0 0 0 1.6 1.6h8.8a1.6 1.6 0 0 0 1.6-1.6v-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
 const ICO_IMG=`<rect x="2.6" y="3.6" width="14.8" height="12.8" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="7" cy="8" r="1.4" fill="currentColor"/><path d="M3.4 14.4 7.8 10l3 3 2.2-2 3.4 3.4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>`;
+const ICO_PDF=`<path d="M4.6 2.6h6.2l4.6 4.6v10.2H4.6z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M10.6 2.8v4.6h4.6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M6.9 13.6h6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`;
 
 function toast(msg){
   const t=$("toast"); if(!t) return;
   t.textContent=msg; t.classList.add("on");
-  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),2600);
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),3200);
 }
+function slug(v){ return String(v||"item").replace(/[^\w-]+/g,"_").replace(/^_+|_+$/g,""); }
 
-/* the sentence that goes out with the link */
-function shareText(s){
+/* ---------- the two things that can be shared ---------- */
+function schoolShareText(s){
   const bits=[];
   if(s.lessons>0)  bits.push(`${fmt(s.lessons)} garden lessons`);
   if(s.tastings>0) bits.push(`${fmt(s.tastings)} taste tests`);
@@ -1275,70 +1283,99 @@ function shareText(s){
   const body=bits.length ? bits.join(" · ") : "the season is just getting started";
   return `🌱 ${s.school} school garden, ${season}: ${body}. One Cool Earth school garden education in San Luis Obispo County.`;
 }
+function seasonShareText(){
+  const t=DATA.totals||{}, ev=DATA.events||{}, bits=[];
+  if(t.lessons>0)  bits.push(`${fmt(t.lessons)} garden lessons taught`);
+  if(t.tastings>0) bits.push(`${fmt(t.tastings)} taste tests`);
+  if(t.produce>0)  bits.push(`${fmt(t.produce)} lb of produce grown`);
+  if(t.diverted>0) bits.push(`${fmt(t.diverted)} lb of lunch scraps kept out of landfill`);
+  if(ev.workdays>0) bits.push(`${fmt(ev.workdays)} community workdays`);
+  const n=(DATA.schools||[]).length;
+  const where=n ? `${n} school gardens` : "our school gardens";
+  const season=DATA.season ? DATA.season+" season" : "this season";
+  const body=bits.length ? bits.join(" · ") : "the season is just getting started";
+  return `🌱 Across ${where} in San Luis Obispo County, ${season}: ${body}. One Cool Earth school garden education.`;
+}
 
-/* render the card to a canvas — shared with the PDF export */
-async function profileCanvas(){
-  const el=$("profile");
-  if(!el) throw new Error("nothing to capture");
+function shareURL(s){
+  try{ const u=new URL(location.href); u.hash=""; u.searchParams.set("school",s.school); return u.toString(); }
+  catch(e){ return location.href; }
+}
+function baseURL(){
+  try{ const u=new URL(location.href); u.hash=""; u.searchParams.delete("school"); return u.toString(); }
+  catch(e){ return location.href; }
+}
+
+/* A context knows everything the menu needs. `capture` hands back the node
+   to photograph plus an optional tidy-up, so the season card can be built
+   on demand and thrown away again. */
+function ctxSchool(){
+  const s=CURRENT_SCHOOL; if(!s) return null;
+  return {
+    title:`${s.school} school garden · One Cool Earth`,
+    text:schoolShareText(s), url:shareURL(s),
+    imgName:slug(s.school)+"_garden.png",
+    pdfName:slug(s.school)+"_garden_impact.pdf",
+    capture:()=>({node:$("profile")})
+  };
+}
+function ctxSeason(){
+  return {
+    title:`One Cool Earth · ${DATA.season||""} garden season`.trim(),
+    text:seasonShareText(), url:baseURL(),
+    imgName:"one_cool_earth_"+slug(DATA.season||"season")+".png",
+    pdfName:"one_cool_earth_"+slug(DATA.season||"season")+"_impact.pdf",
+    capture:()=>{ const node=buildSeasonCard(); return {node, done:()=>node.remove()}; }
+  };
+}
+
+/* The season card is built only when something needs a picture of it — the
+   panel itself is far too tall to post. Rendered off-screen, then removed. */
+function buildSeasonCard(){
+  const t=DATA.totals||{}, g=DATA.goals||{}, ev=DATA.events||{}, eg=eventGoals();
+  const rows=[
+    ["Lessons taught",        t.lessons,   g.lessons,   ""],
+    ["Taste tests",           t.tastings,  g.tastings,  ""],
+    ["Produce grown",         t.produce,   g.produce,   "lb"],
+    ["Lunch scraps diverted", t.diverted,  g.diverted,  "lb"],
+    ["Finished compost",      t.harvested, g.harvested, "lb"],
+    ["Garden workdays",       ev.workdays, eg.workdays, ""],
+    ["Family cook nights",    ev.cookNights, eg.cookNights, ""],
+    ["School waste audits",   ev.wasteAudits, eg.wasteAudits, ""]
+  ];
+  const n=(DATA.schools||[]).length;
+  const host=document.createElement("div");
+  host.className="seasoncard";
+  host.innerHTML=`
+    <div class="sc-head">
+      <div class="sc-eyebrow">One Cool Earth · San Luis Obispo County</div>
+      <h3>${esc(DATA.season||"")} garden season, so far</h3>
+      <p>${n?n+" school gardens":"School gardens"} · every lesson, taste, pound, and gathering</p>
+    </div>
+    <div class="sc-grid">${rows.map(([label,v,goal,unit])=>`
+      <div class="sc-cell">
+        <b>${v==null?"–":fmt(v)}${unit?" "+unit:""}</b>
+        <span>${esc(label)}</span>
+        <em>${goal?("of "+fmt(goal)+(unit?" "+unit:"")+" goal"):"tracked all season"}</em>
+      </div>`).join("")}</div>
+    <div class="sc-foot">One Cool Earth · school garden education</div>`;
+  document.body.appendChild(host);
+  return host;
+}
+
+/* ---------- turning a context into a picture ---------- */
+async function shareCanvas(ctx){
   if(typeof html2canvas==="undefined") throw new Error("image tools are still loading");
-  const bg=getComputedStyle(document.body).backgroundColor || "#eef2f8";
-  return html2canvas(el,{scale:2,backgroundColor:bg,useCORS:true});
-}
-function shareFileName(s){
-  return String(s&&s.school||"school").replace(/[^\w-]+/g,"_").replace(/^_+|_+$/g,"")+"_garden.png";
-}
-
-const SHARE_ACTS={ native:nativeShare, instagram:postToInstagram, copy:copyShare,
-                   image:saveShareImage, pdf:exportSchoolPDF };
-
-function buildShareMenu(){
-  const m=$("shareMenu"), s=CURRENT_SCHOOL; if(!m||!s) return;
-  const text=shareText(s), url=shareURL(s);
-  const opt=(ico,label)=>`<svg viewBox="0 0 20 20" aria-hidden="true">${ico}</svg><span>${label}</span>`;
-  const act=(id,ico,label)=>`<button class="shareopt" type="button" data-act="${id}">${opt(ico,label)}</button>`;
-
-  m.innerHTML=
-    `<p class="sharenote">${esc(text)}</p>` +
-    (navigator.share ? act("native",ICO_SHEET,"Share…") : "") +
-    act("instagram",ICO_INSTA,"Post to Instagram") +
-    act("copy",ICO_COPY,"Copy post and link") +
-    `<div class="sharesep"></div>` +
-    act("image",ICO_IMG,"Save card as an image") +
-    act("pdf",ICO_PDF,"Save card as a PDF") +
-    `<div class="sharesep"></div>` +
-    SHARE_NETS.map(n=>`<a class="shareopt" target="_blank" rel="noopener noreferrer"
-        href="${esc(n.href(text,url))}">${opt(n.ico,n.label)}</a>`).join("");
-
-  m.querySelectorAll("[data-act]").forEach(b=>{
-    const fn=SHARE_ACTS[b.dataset.act];
-    if(fn) b.onclick=()=>{ closeShareMenu(); fn(); };
-  });
-  m.querySelectorAll("a.shareopt").forEach(a=>{ a.onclick=()=>closeShareMenu(); });
+  const cap=ctx.capture();
+  if(!cap || !cap.node) throw new Error("nothing to capture");
+  try{
+    const bg=getComputedStyle(document.body).backgroundColor || "#eef2f8";
+    return await html2canvas(cap.node,{scale:2,backgroundColor:bg,useCORS:true});
+  } finally { if(cap.done) cap.done(); }
 }
 
-function openShareMenu(){
-  const m=$("shareMenu"), b=$("shareBtn"); if(!m||!CURRENT_SCHOOL) return;
-  buildShareMenu();
-  m.hidden=false; if(b) b.setAttribute("aria-expanded","true");
-  setTimeout(()=>document.addEventListener("click",shareOutside),0);
-  document.addEventListener("keydown",shareEsc);
-}
-function closeShareMenu(){
-  const m=$("shareMenu"), b=$("shareBtn");
-  if(m) m.hidden=true;
-  if(b) b.setAttribute("aria-expanded","false");
-  document.removeEventListener("click",shareOutside);
-  document.removeEventListener("keydown",shareEsc);
-}
-function shareOutside(e){
-  const w=document.querySelector(".sharewrap");
-  if(w && !w.contains(e.target)) closeShareMenu();
-}
-function shareEsc(e){ if(e.key==="Escape"){ closeShareMenu(); const b=$("shareBtn"); if(b) b.focus(); } }
-
-async function copyShare(quiet){
-  const s=CURRENT_SCHOOL; if(!s) return false;
-  const payload=shareText(s)+"\n"+shareURL(s);
+async function copyShare(ctx,quiet){
+  const payload=ctx.text+"\n"+ctx.url;
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){
       await navigator.clipboard.writeText(payload);
@@ -1349,70 +1386,120 @@ async function copyShare(quiet){
     }
     if(!quiet) toast("Post and link copied");
     return true;
-  }catch(e){ toast("Couldn't copy — select the text instead"); return false; }
+  }catch(e){ if(!quiet) toast("Couldn't copy — select the text instead"); return false; }
 }
 
-async function saveShareImage(quiet){
-  const s=CURRENT_SCHOOL; if(!s) return false;
+async function saveShareImage(ctx,quiet){
   if(!quiet) toast("Building the image…");
   try{
-    const canvas=await profileCanvas();
+    const canvas=await shareCanvas(ctx);
     const a=document.createElement("a");
-    a.download=shareFileName(s); a.href=canvas.toDataURL("image/png");
+    a.download=ctx.imgName; a.href=canvas.toDataURL("image/png");
     document.body.appendChild(a); a.click(); a.remove();
     if(!quiet) toast("Image saved — ready to post");
     return true;
   }catch(e){ toast("Couldn't build the image: "+e.message); return false; }
 }
 
-/* the device's own share sheet — the only route that reaches the Instagram
-   app, since Instagram has no web posting endpoint. Returns true if the
-   sheet handled it (including the reader cancelling), false if unavailable. */
-async function nativeShare(){
-  const s=CURRENT_SCHOOL; if(!s || !navigator.share) return false;
-  const text=shareText(s), url=shareURL(s), title=`${s.school} school garden · One Cool Earth`;
-  if(navigator.canShare && window.File && typeof html2canvas!=="undefined"){
-    try{
-      const canvas=await profileCanvas();
-      const blob=await new Promise(r=>canvas.toBlob(r,"image/png"));
-      if(blob){
-        const file=new File([blob],shareFileName(s),{type:"image/png"});
-        if(navigator.canShare({files:[file]})){
-          try{ await navigator.share({files:[file],title,text:text+" "+url}); return true; }
-          catch(err){ if(err && err.name==="AbortError") return true; }
-        }
-      }
-    }catch(e){ /* no picture — fall through to the plain link */ }
+async function sharePDF(ctx){
+  if(typeof html2canvas==="undefined" || !window.jspdf){
+    toast("The PDF tools are still loading — try again in a moment"); return false;
   }
-  try{ await navigator.share({title,text,url}); return true; }
-  catch(err){ return !!(err && err.name==="AbortError"); }
+  const btn=OPEN_SHARE_BTN, label=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Preparing PDF…"; }
+  toast("Building the PDF…");
+  try{
+    const canvas=await shareCanvas(ctx);
+    const img=canvas.toDataURL("image/png");
+    const { jsPDF }=window.jspdf;
+    const pdf=new jsPDF({orientation:canvas.width>=canvas.height?"l":"p",unit:"pt",format:"a4"});
+    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+    const m=28, maxW=pw-m*2, maxH=ph-m*2;
+    let w=maxW, h=w*canvas.height/canvas.width;
+    if(h>maxH){ h=maxH; w=h*canvas.width/canvas.height; }
+    pdf.addImage(img,"PNG",(pw-w)/2,m,w,h);
+    pdf.save(ctx.pdfName);
+    toast("PDF saved");
+    return true;
+  }catch(e){ toast("Couldn't generate the PDF: "+e.message); return false; }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=label; } }
 }
 
-/* Instagram accepts no posts from a web page — there is no intent URL and no
-   public API for it. On a phone the share sheet lists the Instagram app, so
-   try that first. On a desktop the honest best is to prepare the two pieces
-   and hand the reader over: caption on the clipboard, image in Downloads. */
-async function postToInstagram(){
-  const s=CURRENT_SCHOOL; if(!s) return;
-  if(await nativeShare()) return;
+/* Instagram takes no post from a web page, so prepare both pieces and let
+   the plain link carry the reader over. The anchor navigates on its own —
+   no window.open, which a pop-up blocker would eat after the await. */
+async function prepForNetwork(ctx){
   toast("Getting the caption and image ready…");
-  const copied=await copyShare(true);
-  const saved =await saveShareImage(true);
-  if(saved){
-    toast(copied ? "Image saved, caption copied — upload it on Instagram"
-                 : "Image saved — upload it on Instagram");
-    window.open("https://www.instagram.com/","_blank","noopener");
-  }
+  const copied=await copyShare(ctx,true);
+  const saved =await saveShareImage(ctx,true);
+  if(saved) toast(copied ? "Image saved and caption copied — upload them on Instagram"
+                         : "Image saved — upload it on Instagram");
 }
 
+/* ---------- the menu ---------- */
+let OPEN_SHARE_MENU=null, OPEN_SHARE_BTN=null;
+
+function buildShareMenu(menu,ctx){
+  const opt=(ico,label)=>`<svg viewBox="0 0 20 20" aria-hidden="true">${ico}</svg><span>${label}</span>`;
+  const act=(id,ico,label)=>`<button class="shareopt" type="button" data-act="${id}">${opt(ico,label)}</button>`;
+  menu.innerHTML=
+    `<p class="sharenote">${esc(ctx.text)}</p>` +
+    act("copy",ICO_COPY,"Copy post and link") +
+    act("image",ICO_IMG,"Save card as an image") +
+    act("pdf",ICO_PDF,"Save card as a PDF") +
+    `<div class="sharesep"></div>` +
+    SHARE_NETS.map(n=>`<a class="shareopt" data-net="${n.id}" target="_blank" rel="noopener noreferrer"
+        href="${esc(n.href(ctx.text,ctx.url))}">${opt(n.ico,n.label)}</a>`).join("");
+
+  const acts={ copy:()=>copyShare(ctx), image:()=>saveShareImage(ctx), pdf:()=>sharePDF(ctx) };
+  menu.querySelectorAll("[data-act]").forEach(b=>{
+    b.onclick=()=>{ const f=acts[b.dataset.act]; closeShareMenu(); if(f) f(); };
+  });
+  menu.querySelectorAll("a[data-net]").forEach(a=>{
+    const net=SHARE_NETS.find(n=>n.id===a.dataset.net);
+    a.onclick=()=>{ closeShareMenu(); if(net && net.prep) prepForNetwork(ctx); };  // link still navigates
+  });
+}
+
+function openShareMenu(btn,menu,ctx){
+  if(!menu||!ctx) return;
+  closeShareMenu();
+  buildShareMenu(menu,ctx);
+  menu.hidden=false; btn.setAttribute("aria-expanded","true");
+  OPEN_SHARE_MENU=menu; OPEN_SHARE_BTN=btn;
+  setTimeout(()=>document.addEventListener("click",shareOutside),0);
+  document.addEventListener("keydown",shareEsc);
+}
+function closeShareMenu(){
+  if(OPEN_SHARE_MENU) OPEN_SHARE_MENU.hidden=true;
+  if(OPEN_SHARE_BTN) OPEN_SHARE_BTN.setAttribute("aria-expanded","false");
+  OPEN_SHARE_MENU=null; OPEN_SHARE_BTN=null;
+  document.removeEventListener("click",shareOutside);
+  document.removeEventListener("keydown",shareEsc);
+}
+function shareOutside(e){
+  if(OPEN_SHARE_MENU && !OPEN_SHARE_MENU.closest(".sharewrap").contains(e.target)) closeShareMenu();
+}
+function shareEsc(e){
+  if(e.key!=="Escape") return;
+  const b=OPEN_SHARE_BTN; closeShareMenu(); if(b) b.focus();
+}
+
+const SHARE_UI=[
+  {btn:"shareBtn",       menu:"shareMenu",       ctx:ctxSchool},
+  {btn:"shareBtnSeason", menu:"shareMenuSeason", ctx:ctxSeason}
+];
 function initShare(){
-  const b=$("shareBtn"); if(!b) return;
-  // always open the menu, on every device: it is the only place the PDF,
-  // the image, and the network links all live
-  b.onclick=e=>{
-    e.stopPropagation();
-    if($("shareMenu").hidden) openShareMenu(); else closeShareMenu();
-  };
+  SHARE_UI.forEach(u=>{
+    const b=$(u.btn), m=$(u.menu); if(!b||!m) return;
+    b.onclick=e=>{
+      e.stopPropagation();
+      if(OPEN_SHARE_MENU===m){ closeShareMenu(); return; }
+      const ctx=u.ctx();
+      if(!ctx){ toast("Pick a school first"); return; }
+      openShareMenu(b,m,ctx);
+    };
+  });
 }
 
 /* ---------- section switcher ----------
