@@ -581,6 +581,10 @@ const CONFIG = {
   // Fallback org goals (the sheet's Totals row is the real source).
   goals: { tastings:25797, lessons:3060, produce:3960, diverted:2376, harvested:1584 },
 
+  // Sites left out of the school dropdown, school count, and share cards.
+  // Org-wide totals still come from the sheet's Totals row, so they are unchanged.
+  hideSchools: /cal\s*poly/i,
+
   // Where every "Donate" link points (school pages + the newsletter block).
   donateURL: "https://www.onecoolearth.org/donor-resources.html",
 
@@ -626,6 +630,7 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let DATA = null;          // active dataset (live or snapshot)
+const shownSchools = list => (list||[]).filter(s=>!(CONFIG.hideSchools && CONFIG.hideSchools.test(s.school)));
 let momentPool = [], momentIdx = 0;
 
 /* ---------- tiny CSV parser (handles quotes, commas, newlines) ---------- */
@@ -1680,10 +1685,10 @@ function boot(){
 
 /* ---------- start: snapshot instantly, then try live ---------- */
 (async function(){
-  DATA={ ...SNAPSHOT }; boot(); setStatus("snap"); fillFieldPhotos();
+  DATA={ ...SNAPSHOT, schools:shownSchools(SNAPSHOT.schools) }; boot(); setStatus("snap"); fillFieldPhotos();
   try{
     const live=await loadLive();
-    DATA={ season:SNAPSHOT.season, goals:live.goals, totals:live.totals, schools:live.schools, moments:live.moments, events:live.events };
+    DATA={ season:SNAPSHOT.season, goals:live.goals, totals:live.totals, schools:shownSchools(live.schools), moments:live.moments, events:live.events };
     // backfill anything missing from the snapshot so nothing renders blank
     for(const k in SNAPSHOT.totals){ if(DATA.totals[k]==null) DATA.totals[k]=SNAPSHOT.totals[k]; }
     for(const k in SNAPSHOT.goals){ if(DATA.goals[k]==null) DATA.goals[k]=SNAPSHOT.goals[k]; }
