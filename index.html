@@ -168,11 +168,9 @@ a{color:var(--leaf-deep)}
 .gcard.notarget .pill{background:#eef2fa;color:var(--soil);border-color:var(--line)}
 
 /* the short note under each goal */
-.gnote{margin-top:15px;padding-top:13px;border-top:1px dashed var(--line)}
-.gnote p{margin:0;font-size:13.5px;line-height:1.6;color:var(--soil)}
-.gnote p + p{margin-top:10px}
-.gnote em{font-style:normal;font-family:"DM Mono",monospace;font-size:10px;letter-spacing:.15em;
-  text-transform:uppercase;color:var(--leaf-deep);display:block;margin-bottom:3px}
+.gcard-link{display:inline-block;margin-top:16px;font-family:"DM Mono",monospace;font-size:11.5px;
+  letter-spacing:.06em;color:var(--leaf-deep);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s}
+.gcard-link:hover,.gcard-link:focus-visible{border-color:var(--leaf-deep)}
 
 /* viz 1 — seedling tray (lessons) */
 .cells{display:grid;grid-template-columns:repeat(var(--cols,10),1fr);gap:3px}
@@ -242,7 +240,6 @@ a{color:var(--leaf-deep)}
 /* ---------- community sub-band ---------- */
 .ev-head{display:flex;align-items:center;gap:10px;margin:30px 0 7px}
 .ev-head .dot{width:6px;height:6px;border-radius:50%;background:var(--marigold);flex:0 0 auto}
-.ev-sub{margin:0 0 15px;color:var(--muted);font-size:14.5px;max-width:62ch}
 
 /* ---------- school explorer ---------- */
 .explorer-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -301,6 +298,16 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
   background:var(--leaf);width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
 .badge.earned:hover{transform:translateY(-3px)}
 
+/* ---------- donate strip on a school page ---------- */
+.donate{display:flex;align-items:center;justify-content:space-between;gap:14px 22px;flex-wrap:wrap;
+  margin:0 26px 26px;padding:18px 22px;border-radius:14px;background:#eef3fb;border:1px solid var(--leaf-soft)}
+.donate-copy b{display:block;font-family:"Fraunces",serif;font-weight:600;font-size:16px;color:var(--ink);line-height:1.25}
+.donate-copy span{display:block;font-size:13.5px;color:var(--soil);margin-top:3px}
+.donate-btn{flex:0 0 auto;display:inline-block;background:var(--leaf);color:#fff;text-decoration:none;
+  font-family:"DM Mono",monospace;font-size:12.5px;letter-spacing:.04em;padding:11px 18px;border-radius:999px;
+  transition:background .15s ease, transform .15s ease;white-space:nowrap}
+.donate-btn:hover,.donate-btn:focus-visible{background:var(--leaf-deep);transform:translateY(-1px)}
+
 /* ---------- footer / status ---------- */
 .foot{margin-top:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
   border-top:1px solid var(--line);padding-top:16px}
@@ -336,8 +343,6 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
 
 /* ---------- garden field photos (interspersed) ---------- */
 .photo-strip{margin-top:26px}
-.photo-strip .strip-lead{display:flex;align-items:center;gap:10px}
-.photo-strip .strip-lead .dot{width:6px;height:6px;border-radius:50%;background:var(--marigold);flex:0 0 auto}
 .photo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:13px}
 .fieldphoto{background:#fbfcff;border:1px solid var(--line);border-radius:9px;padding:8px 8px 0;box-shadow:var(--shadow);margin:0;transition:transform .2s cubic-bezier(.22,.9,.24,1)}
 .fieldphoto img{display:block;width:100%;height:200px;object-fit:cover;border-radius:5px;background:#e1e8f2}
@@ -445,7 +450,6 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
 
   <!-- garden photos: strip -->
   <section class="photo-strip" aria-label="Photos from the gardens">
-    <div class="strip-lead"><span class="dot"></span><span class="stamp">From the gardens</span></div>
     <div class="photo-row" id="photoStripTop"></div>
   </section>
 
@@ -465,9 +469,7 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
       <div>
         <div class="eyebrow">This season, together</div>
         <h2 id="goalsH">Growing toward our goals</h2>
-        <p>Every lesson, taste, pound, and gathering across all One Cool Earth school gardens
-           this year. Each goal is drawn its own way, with a note on why it matters and how
-           we get there.</p>
+        <p>Across all One Cool Earth school gardens this year.</p>
       </div>
       <div class="explorer-actions">
         <div class="sharewrap">
@@ -485,8 +487,6 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
         <span class="dot"></span>
         <span class="stamp">Out in the community</span>
       </div>
-      <p class="ev-sub">Three gatherings carry the garden past the school fence. They are not
-         weighed or averaged — they are counted, one at a time, as they happen.</p>
       <div class="goals three" id="events"><!-- community goal cards injected --></div>
     </div>
   </section>
@@ -530,6 +530,7 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
         <h4>Garden badges earned</h4>
         <div class="badge-grid" id="badges"></div>
       </div>
+      <div class="donate" id="profDonate"></div>
     </div>
   </section>
 
@@ -538,7 +539,6 @@ select#school:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;bor
 
   <!-- garden photos: strip -->
   <section class="photo-strip" aria-label="More photos from the gardens">
-    <div class="strip-lead"><span class="dot"></span><span class="stamp">Around the beds</span></div>
     <div class="photo-row" id="photoStripBottom"></div>
   </section>
 
@@ -580,6 +580,13 @@ const CONFIG = {
 
   // Fallback org goals (the sheet's Totals row is the real source).
   goals: { tastings:25797, lessons:3060, produce:3960, diverted:2376, harvested:1584 },
+
+  // Sites left out of the school dropdown, school count, and share cards.
+  // Org-wide totals still come from the sheet's Totals row, so they are unchanged.
+  hideSchools: /cal\s*poly/i,
+
+  // Where every "Donate" link points (school pages + the newsletter block).
+  donateURL: "https://www.onecoolearth.org/donor-resources.html",
 
   // Targets for the three community gatherings. Leave a value null and the
   // dashboard works it out from the roster, following the program promises
@@ -623,6 +630,7 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let DATA = null;          // active dataset (live or snapshot)
+const shownSchools = list => (list||[]).filter(s=>!(CONFIG.hideSchools && CONFIG.hideSchools.test(s.school)));
 let momentPool = [], momentIdx = 0;
 
 /* ---------- tiny CSV parser (handles quotes, commas, newlines) ---------- */
@@ -830,44 +838,36 @@ async function loadLive(){
    --------------------------------------------------------------------- */
 const METRIC_ROWS=[
   {key:"lessons", name:"Lessons taught", unit:"lessons", lead:true, viz:"tray", cols:20, cells:60, icon:"lessons",
-   why:"A lesson is the unit of contact between a Garden Educator and a class — the moment science, math, and nutrition standards get hands and soil attached to them.",
-   how:"Educators are placed at each school on a fixed schedule: one day a week at Standard sites, aiming for three classes; two days at Premium sites, aiming for six. Every class taught is logged the same day it happens."},
+   link:"https://www.onecoolearth.org/curriculum.html"},
 
   {key:"tastings", name:"Taste tests", unit:"tastes", viz:"dial", icon:"tastings",
-   why:"Children need repeated, no-pressure exposure to a vegetable before they will choose it on their own. The taste test is the cheapest lever we have on how a child eats for the rest of their life.",
-   how:"Something from the beds is prepared and passed around during the lesson. One student trying one sample counts as one taste, and nobody is ever made to eat anything."},
+   link:"https://www.onecoolearth.org/programs-770656.html"},
 
   {key:"produce", name:"Produce grown", unit:"lb", viz:"crate", icon:"produce",
-   why:"Food that leaves the campus gate — into cafeterias, family bags, and tasting tables — is the proof that a school garden is a working piece of ground and not a decoration.",
-   how:"Beds run on a seasonal planting rotation kept up by the Garden Educator alongside student crews. Harvests are weighed at the bed as they come out."},
+   link:"https://www.onecoolearth.org/programs-770656.html"},
 
   {key:"diverted", name:"Lunch scraps diverted", unit:"lb", viz:"scale", icon:"diverted",
-   why:"Cafeteria scraps sent to landfill turn into methane. The same scraps kept on site turn into the school's own soil, and students get to watch the difference happen.",
-   how:"Student Green Teams run share tables and sorting stations through the lunch hour. Buckets are weighed before they are emptied into the bins."},
+   link:"https://www.onecoolearth.org/programs-770656.html"},
 
   {key:"harvested", name:"Finished compost harvested", unit:"lb", viz:"pile", icon:"harvested",
-   why:"This is the loop closing. Compost coming back out of the bin is the one number that shows a student the scraps they sorted in the fall became something real by spring.",
-   how:"Bins are turned and monitored on a schedule. Finished compost is screened, weighed, and spread straight back onto the beds it will feed."}
-];
+   link:"https://www.onecoolearth.org/programs-770656.html"}
+]
 
 /* The three community gatherings. Small whole numbers, so they are counted
    as pips rather than measured as a percentage of a large total. */
 const EVENT_ROWS=[
-  {key:"workdays", name:"Community Workdays in the Garden", unit:"workdays", icon:"workdays", pip:"shovel",
-   per:"two per Standard and Premium school",
-   why:"A garden lives or dies on the community around it. Workdays put families, staff, and neighbors into the beds, and they build the volunteer base that keeps a site going between our visits.",
-   how:"Each Standard and Premium school hosts two a year, organized with the PTA or PTO — a morning of building, planting, and repair with whoever turns up."},
+  {key:"workdays", short:"Garden Workdays", name:"Community Workdays in the Garden",
+   unit:"workdays", icon:"workdays", pip:"shovel",
+   link:"https://www.onecoolearth.org/volunteer-resources-706509.html"},
 
-  {key:"cookNights", name:"Family Cook Nights", unit:"nights", icon:"cooking", pip:"pot",
-   per:"one per Standard and Premium school",
-   why:"The habit has to travel home. A child who tastes something at school and never sees it again in their own kitchen has not really changed anything yet.",
-   how:"Every Standard and Premium school hosts a Virtual Family Cooking Night: one garden-grown recipe, cooked together, with the ingredient list sent home ahead of time."},
+  {key:"cookNights", short:"Family Cook Nights", name:"Family Cook Nights",
+   unit:"nights", icon:"cooking", pip:"pot",
+   link:"https://www.onecoolearth.org/programs-770656.html"},
 
-  {key:"wasteAudits", name:"School Waste Audits", unit:"audits", icon:"waste", pip:"clipboard",
-   per:"one per Premium school",
-   why:"You cannot reduce what you have never measured. The audit hands a school its own number and turns waste into a student-led investigation instead of a lecture.",
-   how:"Green Team students sort and weigh a day's worth of cafeteria waste by stream, then take the findings back to staff. Premium schools run a school-wide audit each year."}
-];
+  {key:"wasteAudits", short:"Waste Audits", name:"School Waste Audits",
+   unit:"audits", icon:"waste", pip:"clipboard",
+   link:"https://www.onecoolearth.org/programs-770656.html"}
+]
 
 /* ---------- icons ---------- */
 function gIcon(kind){
@@ -994,12 +994,6 @@ function vizPips(r,st,known){
 }
 const VIZ={tray:vizTray,dial:vizDial,crate:vizCrate,scale:vizScale,pile:vizPile};
 
-function noteHTML(row){
-  return `<div class="gnote">
-      <p><em>Why it matters</em>${esc(row.why)}</p>
-      <p><em>How we do it</em>${esc(row.how)}</p>
-    </div>`;
-}
 /* run every fill animation once the layout has settled */
 function animateGoals(host){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -1029,7 +1023,7 @@ function renderGoals(){
         <span class="pill ${st.hasGoal?(st.exceeded?"met":"track"):"none"}">${
           st.hasGoal?(st.exceeded?("Goal met · "+st.pct+"%"):(st.pct+"% there")):"Harvested to date"}</span>
       </div>
-      ${noteHTML(m)}`;
+      <a class="gcard-link" href="${m.link}" target="_blank" rel="noopener noreferrer">Learn more ↗</a>`;
     host.appendChild(el);
   });
   animateGoals(host);
@@ -1060,20 +1054,14 @@ function renderCommunity(){
     const known = ev[r.key]!=null;           // never publish a zero the sheet hasn't vouched for
     const st=goalState(known?ev[r.key]:0, eg[r.key], r.unit);
     const el=document.createElement("div");
-    el.className="gcard"+(st.hasGoal?"":" notarget");
+    el.className="gcard evcard"+(st.hasGoal?"":" notarget");
     el.innerHTML=`
       <div class="gcard-top">
-        <div class="gcard-name">${gIcon(r.icon)}<b>${r.name}</b></div>
+        <div class="gcard-name">${gIcon(r.icon)}<b>${r.short}</b></div>
         <div class="gcard-val">${known?fmt(st.val):"–"}<small>${r.unit}</small></div>
       </div>
       <div class="viz">${vizPips(r,st,known)}</div>
-      <div class="gcard-foot">
-        <span class="goal">${st.hasGoal?("Goal · "+fmt(st.goal)+" · "+r.per):"Counted all season"}</span>
-        <span class="pill ${known?(st.hasGoal?(st.exceeded?"met":"track"):"none"):"none"}">${
-          known ? (st.hasGoal ? (st.exceeded?("All held · "+st.pct+"%"):(st.pct+"% held")) : "Held to date")
-                : "Not yet logged"}</span>
-      </div>
-      ${noteHTML(r)}`;
+      <a class="gcard-link" href="${r.link}" target="_blank" rel="noopener noreferrer">Learn more \u2197</a>`;
     host.appendChild(el);
   });
   animateGoals(host);
@@ -1133,6 +1121,11 @@ function renderSchool(s){
     return `<div class="badge ${earned?"earned":""}" title="${earned?"Earned":"Not yet"} · ${b.crit}">
       <div class="em">${b.em}</div><span class="bn">${b.name}</span><span class="bc">${b.crit}</span></div>`;
   }).join("");
+
+  $("profDonate").innerHTML =
+      `<div class="donate-copy"><b>Support the ${esc(s.school)} garden</b>`
+    + `<span>Your gift keeps a Garden Educator in these beds all season long.</span></div>`
+    + `<a class="donate-btn" href="${esc(CONFIG.donateURL)}" target="_blank" rel="noopener noreferrer">Donate to One Cool Earth \u2197</a>`;
 }
 
 /* ---------- which school is on screen ----------
@@ -1221,13 +1214,11 @@ function setStatus(mode){
 function fillFieldPhotos(){
   if(!Array.isArray(GARDEN_PHOTOS) || !GARDEN_PHOTOS.length) return;
   const pics=shuffle([...GARDEN_PHOTOS]);
-  const caps=shuffle(["From the gardens","One Cool Earth","In the beds","Garden day","Harvest time","Field photo","Growing season"]);
-  let ci=0; const cap=()=>caps[(ci++)%caps.length];
-  const card=src=>`<figure class="fieldphoto"><img loading="lazy" src="${src}" alt="A moment from a One Cool Earth school garden"><figcaption class="cap">${cap()}</figcaption></figure>`;
+  const card=src=>`<figure class="fieldphoto"><img loading="lazy" src="${src}" alt="A moment from a One Cool Earth school garden"></figure>`;
   const strip=(el,n)=>{ if(el && pics.length) el.innerHTML=pics.splice(0,n).map(card).join(""); };
   strip($("photoStripTop"),3);
   const b=$("photoBanner");
-  if(b && pics.length){ b.innerHTML=`<img loading="lazy" src="${pics.shift()}" alt="A One Cool Earth school garden"><span class="cap">${cap()}</span>`; }
+  if(b && pics.length){ b.innerHTML=`<img loading="lazy" src="${pics.shift()}" alt="A One Cool Earth school garden">`; }
   strip($("photoStripBottom"),3);
 }
 
@@ -1316,6 +1307,8 @@ function ctxSchool(){
     text:schoolShareText(s), url:shareURL(s),
     imgName:slug(s.school)+"_garden.png",
     pdfName:slug(s.school)+"_garden_impact.pdf",
+    newsName:slug(s.school)+"_garden_newsletter.html",
+    news:()=>schoolNewsletter(s),
     capture:()=>({node:$("profile")})
   };
 }
@@ -1325,6 +1318,8 @@ function ctxSeason(){
     text:seasonShareText(), url:baseURL(),
     imgName:"one_cool_earth_"+slug(DATA.season||"season")+".png",
     pdfName:"one_cool_earth_"+slug(DATA.season||"season")+"_impact.pdf",
+    newsName:"one_cool_earth_"+slug(DATA.season||"season")+"_newsletter.html",
+    news:()=>seasonNewsletter(),
     capture:()=>{ const node=buildSeasonCard(); return {node, done:()=>node.remove()}; }
   };
 }
@@ -1436,6 +1431,153 @@ async function prepForNetwork(ctx){
                          : "Image saved — upload it on Instagram");
 }
 
+const ICO_NEWS=`<rect x="2.6" y="4" width="14.8" height="12" rx="1.8" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M5.4 7.6h6M5.4 10h6M5.4 12.4h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="12.2" y="7.4" width="2.6" height="2.6" rx="0.4" fill="currentColor"/>`;
+
+/* ---------- newsletter (MailChimp-ready) ----------
+   Builds an email-safe HTML block: table layout, inline styles only, and
+   web-safe fonts, so it survives email clients that strip <style> and modern
+   CSS. Two ways to use the downloaded file: open it in a browser and copy the
+   rendered block into a Text block, or drop the raw HTML into a "Code" block
+   in the MailChimp editor. Colours mirror the dashboard's palette. */
+const NL={ink:"#16294a",leaf:"#345a9a",leafBtn:"#4a79bd",leafSoft:"#c9d7ec",accent:"#3a97c4",
+          marigold:"#5cbce0",soil:"#414f66",muted:"#6c7688",card:"#ffffff",wash:"#eef3fb",line:"#dfe6f0",page:"#f3f6fb"};
+const NL_DONATE=CONFIG.donateURL;
+
+function nlNum(v,unit){
+  return `<span style="font-family:Georgia,'Times New Roman',serif;font-weight:bold;">${fmt(v)}</span>`
+    + (unit?`<span style="font-size:.55em;color:${NL.soil};font-weight:normal;font-family:Arial,Helvetica,sans-serif;"> ${unit}</span>`:"");
+}
+function nlGoal(goal,unit){
+  return (goal!=null&&goal>0) ? `of ${fmt(goal)}${unit?" "+unit:""} goal` : "";
+}
+
+function nlHero(o){
+  const goal=nlGoal(o.goal,o.unit);
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${NL.wash};border:1px solid ${NL.line};border-radius:12px;">
+      <tr>
+        <td width="72" valign="middle" style="padding:16px 0 16px 18px;">
+          <div style="width:50px;height:50px;line-height:50px;text-align:center;font-size:26px;background:${NL.card};border:1px solid ${NL.line};border-radius:12px;">${o.emoji}</div>
+        </td>
+        <td valign="middle" style="padding:14px 18px;">
+          <div style="font-size:33px;color:${NL.leaf};line-height:1;">${nlNum(o.value,o.unit)}</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:${NL.ink};padding-top:5px;">${o.label}${goal?` <span style="color:${NL.muted};">&middot; ${goal}</span>`:""}</div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function nlCell(o){
+  const goal=nlGoal(o.goal,o.unit);
+  return `<td width="50%" valign="top" style="padding:6px;">`
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${NL.card};border:1px solid ${NL.line};border-left:4px solid ${NL.leaf};border-radius:10px;">`
+    + `<tr>`
+    + `<td width="42" valign="top" style="padding:13px 0 13px 12px;"><div style="width:30px;height:30px;line-height:30px;text-align:center;font-size:17px;background:${NL.wash};border-radius:8px;">${o.emoji}</div></td>`
+    + `<td valign="top" style="padding:12px 13px 12px 9px;">`
+    + `<div style="font-size:22px;color:${NL.leaf};line-height:1.05;">${nlNum(o.value,o.unit)}</div>`
+    + `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${NL.ink};padding-top:3px;line-height:1.3;">${o.label}</div>`
+    + (goal?`<div style="font-family:'Courier New',Courier,monospace;font-size:10px;color:${NL.muted};padding-top:3px;">${goal}</div>`:"")
+    + `</td></tr></table></td>`;
+}
+
+function newsletterBlock(title,subtitle,hero,rows,dashURL){
+  const cells=rows.filter(r=>r.value!=null).map(nlCell);
+  let grid="";
+  for(let i=0;i<cells.length;i+=2) grid+=`<tr>${cells[i]}${cells[i+1]||'<td width="50%"></td>'}</tr>`;
+  const heroHTML=(hero && hero.value!=null) ? `<tr><td style="padding:18px 22px 2px;">${nlHero(hero)}</td></tr>` : "";
+  return `<!-- One Cool Earth | newsletter stats block -----------------------------------
+     HOW TO ADD THIS TO YOUR MAILCHIMP NEWSLETTER
+       Option 1 (easiest): open this file in a web browser, select the block,
+         copy it, and paste into a Text content block in the MailChimp editor.
+       Option 2 (cleanest): in the MailChimp editor drag in a "Code" content
+         block and paste everything below this comment into it.
+     Layout and colours are email-safe (table layout, inline styles, web-safe
+     fonts, emoji instead of hosted images), so it survives Outlook, Gmail, and
+     Apple Mail without any images to host.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:${NL.page};margin:0;padding:0;">
+<tr><td align="center" style="padding:22px 10px;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:600px;background:${NL.card};border:1px solid ${NL.line};border-radius:16px;">
+    <!-- top accent stripe -->
+    <tr><td style="height:6px;line-height:6px;font-size:0;background:${NL.marigold};border-radius:16px 16px 0 0;">&nbsp;</td></tr>
+    <!-- header band -->
+    <tr><td bgcolor="${NL.ink}" style="background:${NL.ink};padding:24px 30px;border-radius:0;">
+      <div style="font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${NL.marigold};">One Cool Earth &middot; San Luis Obispo County</div>
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ffffff;padding-top:9px;line-height:1.2;">${title}</div>
+      ${subtitle?`<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${NL.leafSoft};padding-top:6px;">${subtitle}</div>`:""}
+    </td></tr>
+    <!-- hero stat -->
+    ${heroHTML}
+    <!-- stat grid -->
+    <tr><td style="padding:8px 16px 2px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${grid}</table>
+    </td></tr>
+    <!-- call to action -->
+    <tr><td style="padding:16px 22px 24px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${NL.wash};border:1px solid ${NL.line};border-radius:12px;">
+        <tr><td align="center" style="padding:20px 20px;">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:bold;color:${NL.ink};padding-bottom:13px;">Help these gardens keep growing.</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;margin:0 auto;">
+            <tr><td align="center" bgcolor="${NL.leafBtn}" style="border-radius:999px;background:${NL.leafBtn};">
+              <a href="${NL_DONATE}" style="display:inline-block;padding:13px 30px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">Donate to One Cool Earth</a>
+            </td></tr>
+          </table>
+          <div style="padding-top:13px;"><a href="${dashURL}" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:${NL.leaf};text-decoration:none;">See the full impact dashboard &rarr;</a></div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</td></tr>
+</table>`;
+}
+
+function seasonNewsletter(){
+  const t=DATA.totals||{}, ev=DATA.events||{}, g=DATA.goals||{}, eg=eventGoals();
+  const n=(DATA.schools||[]).length;
+  const season=DATA.season||"";
+  const hero={emoji:"\uD83D\uDCD6", label:"Garden lessons taught", value:(t.lessons!=null?t.lessons:null), unit:"", goal:g.lessons};
+  const rows=[
+    {emoji:"\uD83E\uDD55", label:"Taste tests",            value:t.tastings,     unit:"",   goal:g.tastings},
+    {emoji:"\uD83C\uDF45", label:"Produce grown",          value:t.produce,      unit:"lb", goal:g.produce},
+    {emoji:"\u267B\uFE0F", label:"Lunch scraps diverted",  value:t.diverted,     unit:"lb", goal:g.diverted},
+    {emoji:"\uD83C\uDF31", label:"Finished compost",       value:t.harvested,    unit:"lb", goal:g.harvested},
+    {emoji:"\uD83C\uDF3B", label:"Garden workdays",        value:ev.workdays,    unit:"",   goal:eg.workdays},
+    {emoji:"\uD83C\uDF73", label:"Family cook nights",     value:ev.cookNights,  unit:"",   goal:eg.cookNights},
+    {emoji:"\uD83D\uDDD1\uFE0F", label:"School waste audits", value:ev.wasteAudits, unit:"", goal:eg.wasteAudits}
+  ];
+  const title=(season?season+" ":"")+"Garden Season, so far";
+  const sub=(n?n+" school gardens":"School gardens")+" across San Luis Obispo County";
+  return newsletterBlock(title,sub,hero,rows,baseURL());
+}
+
+function schoolNewsletter(s){
+  const has=v=>(v&&v>0)?v:null;   // a school shows only what it actually has
+  const hero={emoji:"\uD83D\uDCD6", label:"Garden lessons taught", value:has(s.lessons), unit:"", goal:s.lessonsGoal};
+  const rows=[
+    {emoji:"\uD83E\uDD55", label:"Taste tests",           value:has(s.tastings),  unit:"",   goal:s.tastingsGoal},
+    {emoji:"\uD83C\uDF45", label:"Produce grown",         value:has(s.produce),   unit:"lb", goal:s.produceGoal},
+    {emoji:"\u267B\uFE0F", label:"Lunch scraps diverted", value:has(s.diverted),  unit:"lb", goal:s.divertedGoal},
+    {emoji:"\uD83C\uDF31", label:"Finished compost",      value:has(s.harvested), unit:"lb", goal:s.harvestedGoal}
+  ];
+  const season=DATA.season?`${DATA.season} garden season`:"Garden season";
+  const sub=(s.district?s.district+" \u00b7 ":"")+season;
+  return newsletterBlock(`${s.school} School Garden`,sub,hero,rows,shareURL(s));
+}
+
+function downloadNewsletter(ctx){
+  if(!ctx || !ctx.news){ toast("Nothing to export yet"); return false; }
+  try{
+    const html=ctx.news();
+    const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+    const a=document.createElement("a");
+    a.download=ctx.newsName||"one_cool_earth_newsletter.html";
+    a.href=URL.createObjectURL(blob);
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} },4000);
+    toast("Newsletter block saved \u2014 paste it into MailChimp");
+    return true;
+  }catch(e){ toast("Couldn't build the newsletter block: "+e.message); return false; }
+}
+
 /* ---------- the menu ---------- */
 let OPEN_SHARE_MENU=null, OPEN_SHARE_BTN=null;
 
@@ -1447,11 +1589,13 @@ function buildShareMenu(menu,ctx){
     act("copy",ICO_COPY,"Copy post and link") +
     act("image",ICO_IMG,"Save card as an image") +
     act("pdf",ICO_PDF,"Save card as a PDF") +
+    act("news",ICO_NEWS,"Save for newsletter (MailChimp)") +
     `<div class="sharesep"></div>` +
     SHARE_NETS.map(n=>`<a class="shareopt" data-net="${n.id}" target="_blank" rel="noopener noreferrer"
         href="${esc(n.href(ctx.text,ctx.url))}">${opt(n.ico,n.label)}</a>`).join("");
 
-  const acts={ copy:()=>copyShare(ctx), image:()=>saveShareImage(ctx), pdf:()=>sharePDF(ctx) };
+  const acts={ copy:()=>copyShare(ctx), image:()=>saveShareImage(ctx), pdf:()=>sharePDF(ctx),
+               news:()=>downloadNewsletter(ctx) };
   menu.querySelectorAll("[data-act]").forEach(b=>{
     b.onclick=()=>{ const f=acts[b.dataset.act]; closeShareMenu(); if(f) f(); };
   });
@@ -1541,10 +1685,10 @@ function boot(){
 
 /* ---------- start: snapshot instantly, then try live ---------- */
 (async function(){
-  DATA={ ...SNAPSHOT }; boot(); setStatus("snap"); fillFieldPhotos();
+  DATA={ ...SNAPSHOT, schools:shownSchools(SNAPSHOT.schools) }; boot(); setStatus("snap"); fillFieldPhotos();
   try{
     const live=await loadLive();
-    DATA={ season:SNAPSHOT.season, goals:live.goals, totals:live.totals, schools:live.schools, moments:live.moments, events:live.events };
+    DATA={ season:SNAPSHOT.season, goals:live.goals, totals:live.totals, schools:shownSchools(live.schools), moments:live.moments, events:live.events };
     // backfill anything missing from the snapshot so nothing renders blank
     for(const k in SNAPSHOT.totals){ if(DATA.totals[k]==null) DATA.totals[k]=SNAPSHOT.totals[k]; }
     for(const k in SNAPSHOT.goals){ if(DATA.goals[k]==null) DATA.goals[k]=SNAPSHOT.goals[k]; }
