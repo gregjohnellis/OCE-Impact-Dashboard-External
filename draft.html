@@ -3663,13 +3663,16 @@ function buildSeasonCard(){
 }
 
 /* ---------- turning a context into a picture ---------- */
-async function shareCanvas(ctx){
+/* `omit` is a CSS selector for parts left out of the picture. The PDF uses it
+   to drop the on-page donate box, since the PDF carries its own QR code. */
+async function shareCanvas(ctx,omit){
   if(typeof html2canvas==="undefined") throw new Error("image tools are still loading");
   const cap=ctx.capture();
   if(!cap || !cap.node) throw new Error("nothing to capture");
   try{
     const bg=getComputedStyle(document.body).backgroundColor || "#eef7fc";
-    return await html2canvas(cap.node,{scale:2,backgroundColor:bg,useCORS:true});
+    return await html2canvas(cap.node,{scale:2,backgroundColor:bg,useCORS:true,
+      onclone:doc=>{ if(omit) doc.querySelectorAll(omit).forEach(el=>el.remove()); }});
   } finally { if(cap.done) cap.done(); }
 }
 
@@ -3730,7 +3733,7 @@ async function sharePDF(ctx){
   if(btn){ btn.disabled=true; btn.textContent="Preparing PDF…"; }
   toast("Building the PDF…");
   try{
-    const canvas=await shareCanvas(ctx);
+    const canvas=await shareCanvas(ctx, pdfCanDonate()?".donate":null);
     const img=canvas.toDataURL("image/png");
     const { jsPDF }=window.jspdf;
     const pdf=new jsPDF({orientation:canvas.width>=canvas.height?"l":"p",unit:"pt",format:"a4"});
